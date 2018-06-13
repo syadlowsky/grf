@@ -20,6 +20,7 @@
 #include <future>
 #include <stdexcept>
 #include <string>
+#include <cstdio>
 
 #include "commons/utility.h"
 #include "ForestTrainer.h"
@@ -44,8 +45,17 @@ const Forest ForestTrainer::train(Data* data,
     throw std::runtime_error("The sample fraction is too small, as no observations will be sampled.");
   }
 
+  printf("Getting num_types\n");
   size_t num_types = observables.size();
-  std::vector<std::vector<double>> observations_by_type(num_types);
+  for (auto it : observables) {
+    size_t type = it.first;
+    if (type > num_types) {
+      num_types = type;
+    }
+  }
+
+  printf("Got num_types %d\n", num_types);
+  std::vector<std::vector<double>> observations_by_type(num_types + 1);
   for (auto it : observables) {
     size_t type = it.first;
     size_t index = it.second;

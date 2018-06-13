@@ -57,8 +57,13 @@ ForestTrainer ForestTrainers::quantile_trainer(size_t outcome_index,
   return ForestTrainer(observables, relabeling_strategy, splitting_rule_factory, NULL);
 }
 
-ForestTrainer ForestTrainers::regression_trainer(size_t outcome_index) {
-  std::unordered_map<size_t, size_t> observables = {{Observations::OUTCOME, outcome_index}};
+ForestTrainer ForestTrainers::regression_trainer(size_t outcome_index, size_t weight_index) {
+  std::unordered_map<size_t, size_t> observables;
+  if (weight_index >= 0) {
+    observables = {{Observations::OUTCOME, outcome_index}, {Observations::WEIGHT, weight_index}};
+  } else {
+    observables = {{Observations::OUTCOME, outcome_index}};
+  }
 
   std::shared_ptr<RelabelingStrategy> relabeling_strategy(new NoopRelabelingStrategy());
   std::shared_ptr<SplittingRuleFactory> splitting_rule_factory(new RegressionSplittingRuleFactory());

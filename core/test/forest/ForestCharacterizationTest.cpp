@@ -157,7 +157,7 @@ TEST_CASE("causal forest predictions with stable splitting have not changed", "[
 TEST_CASE("regression forest predictions have not changed", "[regression], [characterization]") {
   Data* data = load_data("test/forest/resources/regression_data.csv");
 
-  ForestTrainer trainer = ForestTrainers::regression_trainer(10);
+  ForestTrainer trainer = ForestTrainers::regression_trainer(10, -1);
   ForestOptions options = ForestTestUtilities::default_options();
   Forest forest = trainer.train(data, options);
 

@@ -74,7 +74,8 @@ private:
                            std::vector<std::vector<size_t>>& samples,
                            std::vector<size_t>& split_vars,
                            std::vector<double>& split_values,
-                           uint min_node_size) const ;
+                           uint min_node_size,
+			   bool weighted) const ;
 
   std::set<size_t> disallowed_split_variables;
 

@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <cstdio>
 
 #include "commons/DefaultData.h"
 #include "tree/TreeTrainer.h"
@@ -30,7 +31,9 @@ TreeTrainer::TreeTrainer(const std::unordered_map<size_t, size_t>& observables,
     prediction_strategy(prediction_strategy) {
 
   for (auto it : observables) {
-    this->disallowed_split_variables.insert(it.second);
+    if (it.second >= 0) {
+      this->disallowed_split_variables.insert(it.second);
+    }
   }
 }
 
@@ -43,6 +46,7 @@ std::shared_ptr<Tree> TreeTrainer::train(Data* data,
   std::vector<std::vector<size_t>> nodes;
   std::vector<size_t> split_vars;
   std::vector<double> split_values;
+  printf("In tree trainer\n");
 
   child_nodes.push_back(std::vector<size_t>());
   child_nodes.push_back(std::vector<size_t>());
@@ -60,9 +64,11 @@ std::shared_ptr<Tree> TreeTrainer::train(Data* data,
   } else {
     sampler.sample_from_clusters(clusters, nodes[0]);
   }
+  printf("Honesty handled\n");
 
   std::shared_ptr<SplittingRule> splitting_rule = splitting_rule_factory->create(
       data, observations, options);
+  printf("Splitting rule xtr\n");
 
   size_t num_open_nodes = 1;
   size_t i = 0;
@@ -164,7 +170,8 @@ bool TreeTrainer::split_node(size_t node,
                                   samples,
                                   split_vars,
                                   split_values,
-                                  options.get_min_node_size());
+                                  options.get_min_node_size(),
+				  options.get_weighted());
   if (stop) {
     return true;
   }
@@ -201,7 +208,8 @@ bool TreeTrainer::split_node_internal(size_t node,
                                       std::vector<std::vector<size_t>>& samples,
                                       std::vector<size_t>& split_vars,
                                       std::vector<double>& split_values,
-                                      uint min_node_size) const {
+                                      uint min_node_size,
+				      bool weighted) const {
   // Check node size, stop if maximum reached
   if (samples[node].size() <= min_node_size) {
     split_values[node] = -1.0;
@@ -229,10 +237,21 @@ bool TreeTrainer::split_node_internal(size_t node,
   std::unordered_map<size_t, double> responses_by_sample = relabeling_strategy->relabel(
       samples[node], observations);
 
+  printf("Weighting %d\n", weighted);
+  std::unordered_map<size_t, double> weights_by_sample(0);
+  for (size_t sample : samples[node]) {
+    if (weighted) {
+      weights_by_sample[sample] = observations.get(Observations::WEIGHT, sample);
+    } else {
+      weights_by_sample[sample] = 1;
+    }
+  }
+
   bool stop = responses_by_sample.empty() ||
               splitting_rule->find_best_split(node,
                                               possible_split_vars,
                                               responses_by_sample,
+                                              weights_by_sample,
                                               samples,
                                               split_vars,
                                               split_values);

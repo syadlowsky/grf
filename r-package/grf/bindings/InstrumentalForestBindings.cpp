@@ -38,7 +38,7 @@ Rcpp::List instrumental_train(Rcpp::NumericMatrix input_data,
 
   Data* data = RcppUtilities::convert_data(input_data, sparse_input_data);
   ForestOptions options(num_trees, ci_group_size, sample_fraction, mtry, min_node_size,
-      honesty, alpha, imbalance_penalty, num_threads, seed, clusters, samples_per_cluster);
+      honesty, false, alpha, imbalance_penalty, num_threads, seed, clusters, samples_per_cluster);
 
   Forest forest = trainer.train(data, options);
 

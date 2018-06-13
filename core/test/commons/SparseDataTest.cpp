@@ -29,7 +29,7 @@ TEST_CASE("using a sparse data representation produces the same predictions", "[
 
   uint outcome_index = 10;
 
-  ForestTrainer trainer = ForestTrainers::regression_trainer(outcome_index);
+  ForestTrainer trainer = ForestTrainers::regression_trainer(outcome_index, -1);
   ForestPredictor predictor = ForestPredictors::regression_predictor(4, 1);
   ForestOptions options = ForestTestUtilities::default_options();
 

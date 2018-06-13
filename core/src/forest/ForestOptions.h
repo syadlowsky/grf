@@ -32,6 +32,7 @@ public:
                 uint mtry,
                 uint min_node_size,
                 bool honesty,
+                bool weighted,
                 double alpha,
                 double imbalance_penalty,
                 uint num_threads,

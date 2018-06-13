@@ -21,6 +21,7 @@
 const std::size_t Observations::OUTCOME = 0;
 const std::size_t Observations::TREATMENT = 1;
 const std::size_t Observations::INSTRUMENT = 2;
+const std::size_t Observations::WEIGHT = 3;
 
 Observations::Observations():
   observations_by_type(std::vector<std::vector<double>>()),

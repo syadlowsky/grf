@@ -38,6 +38,7 @@ public:
   static const std::size_t OUTCOME;
   static const std::size_t TREATMENT;
   static const std::size_t INSTRUMENT;
+  static const std::size_t WEIGHT;
 
 private:
   std::vector<std::vector<double>> observations_by_type;

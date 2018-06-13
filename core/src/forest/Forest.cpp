@@ -17,6 +17,7 @@
 
 #include "commons/DefaultData.h"
 #include "forest/Forest.h"
+#include <cstdio>
 
 Forest Forest::create(std::vector<std::shared_ptr<Tree>> trees,
                       Data* data,
@@ -30,6 +31,7 @@ Forest Forest::create(std::vector<std::shared_ptr<Tree>> trees,
   for (auto it : observables) {
     size_t type = it.first;
     size_t index = it.second;
+    printf("Type %d, index %d\n", type, index);
 
     observations_by_type[type].resize(num_samples);
     for (size_t row = 0; row < num_samples; ++row) {

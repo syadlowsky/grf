@@ -31,7 +31,7 @@ TEST_CASE("LLF predictions vary linearly with Y", "[local_linear, forest]") {
   std::vector<size_t> linear_correction_variables = {1, 4, 7};
 
   // Run the original forest.
-  ForestTrainer trainer = ForestTrainers::regression_trainer(outcome_index);
+  ForestTrainer trainer = ForestTrainers::regression_trainer(outcome_index, -1);
   ForestOptions options = ForestTestUtilities::default_honest_options();
   Forest forest = trainer.train(data, options);
   ForestPredictor predictor = ForestPredictors::local_linear_predictor(4, data, data, 0.1, false, linear_correction_variables);
