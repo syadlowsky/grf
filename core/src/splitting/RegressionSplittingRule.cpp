@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <math.h>
+#include <cstdio>
 
 #include "RegressionSplittingRule.h"
 
@@ -63,6 +64,7 @@ bool RegressionSplittingRule::find_best_split(size_t node,
     weight = weights_by_sample.at(sample);
     sum_node += weight * labels_by_sample.at(sample);
     weight_node += weight;
+    // std::cout << "weight of node: " << weight_node << std::endl;
   }
 
   // Initialize the variables to track the best split variable.
@@ -94,7 +96,8 @@ bool RegressionSplittingRule::find_best_split(size_t node,
   return false;
 }
 
-void RegressionSplittingRule::find_best_split_value_small_q(size_t node, size_t var,
+void RegressionSplittingRule::find_best_split_value_small_q(size_t node,
+                                                            size_t var,
                                                             double sum_node,
                                                             double weight_node,
                                                             size_t size_node,
@@ -122,6 +125,7 @@ void RegressionSplittingRule::find_best_split_value_small_q(size_t node, size_t 
   size_t* n_right;
   sums_right = sums;
   n_right = counter;
+  weights_right = weights;
   std::fill(sums_right, sums_right + num_splits, 0);
   std::fill(n_right, n_right + num_splits, 0);
   std::fill(weights_right, weights_right + num_splits, 0);
@@ -162,6 +166,12 @@ void RegressionSplittingRule::find_best_split_value_small_q(size_t node, size_t 
     double sum_left = sum_node - sum_right;
     double weight_right = weights_right[i];
     double weight_left = weight_node - weight_right;
+    // std::cout << "size: " << size_node << std::endl;
+    // std::cout << "weight left: " << weight_left
+    //           << "n left: " << n_left
+    //           << "weight right: " << weight_right
+    //           << "n right: " << n_right[i]
+    //           << std::endl;
     double decrease = sum_left * sum_left / weight_left + sum_right * sum_right / weight_right;
 
     // Penalize splits that are too close to the edges of the data.
@@ -180,8 +190,8 @@ void RegressionSplittingRule::find_best_split_value_small_q(size_t node, size_t 
 
 void RegressionSplittingRule::find_best_split_value_large_q(size_t node,
                                                             size_t var,
-                                                            double weight_node,
                                                             double sum_node,
+                                                            double weight_node,
                                                             size_t size_node,
                                                             size_t min_child_size,
                                                             double& best_value,
@@ -229,6 +239,12 @@ void RegressionSplittingRule::find_best_split_value_large_q(size_t node,
 
     double sum_right = sum_node - sum_left;
     double weight_right = weight_node - weight_left;
+    // std::cout << "weight node: " << weight_node << " ";
+    // std::cout << "Q weight left: " << weight_left
+    //           << " n left: " << n_left
+    //           << " weight right: " << weight_right
+    //           << " n right: " << n_right
+    //           << std::endl;
     double decrease = sum_left * sum_left / weight_left + sum_right * sum_right / weight_right;
 
     // Penalize splits that are too close to the edges of the data.

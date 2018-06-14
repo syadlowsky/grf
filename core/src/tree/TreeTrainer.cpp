@@ -17,7 +17,7 @@
 
 #include <algorithm>
 #include <memory>
-#include <cstdio>
+#include <iostream>
 
 #include "commons/DefaultData.h"
 #include "tree/TreeTrainer.h"
@@ -46,7 +46,6 @@ std::shared_ptr<Tree> TreeTrainer::train(Data* data,
   std::vector<std::vector<size_t>> nodes;
   std::vector<size_t> split_vars;
   std::vector<double> split_values;
-  printf("In tree trainer\n");
 
   child_nodes.push_back(std::vector<size_t>());
   child_nodes.push_back(std::vector<size_t>());
@@ -64,11 +63,9 @@ std::shared_ptr<Tree> TreeTrainer::train(Data* data,
   } else {
     sampler.sample_from_clusters(clusters, nodes[0]);
   }
-  printf("Honesty handled\n");
 
   std::shared_ptr<SplittingRule> splitting_rule = splitting_rule_factory->create(
       data, observations, options);
-  printf("Splitting rule xtr\n");
 
   size_t num_open_nodes = 1;
   size_t i = 0;
@@ -237,8 +234,7 @@ bool TreeTrainer::split_node_internal(size_t node,
   std::unordered_map<size_t, double> responses_by_sample = relabeling_strategy->relabel(
       samples[node], observations);
 
-  printf("Weighting %d\n", weighted);
-  std::unordered_map<size_t, double> weights_by_sample(0);
+  std::unordered_map<size_t, double> weights_by_sample;
   for (size_t sample : samples[node]) {
     if (weighted) {
       weights_by_sample[sample] = observations.get(Observations::WEIGHT, sample);

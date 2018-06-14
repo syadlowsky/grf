@@ -26,6 +26,8 @@
 #include "splitting/factory/ProbabilitySplittingRuleFactory.h"
 #include "splitting/factory/RegressionSplittingRuleFactory.h"
 
+#include <cstdio>
+
 
 ForestTrainer ForestTrainers::instrumental_trainer(size_t outcome_index,
                                                    size_t treatment_index,
@@ -57,10 +59,10 @@ ForestTrainer ForestTrainers::quantile_trainer(size_t outcome_index,
   return ForestTrainer(observables, relabeling_strategy, splitting_rule_factory, NULL);
 }
 
-ForestTrainer ForestTrainers::regression_trainer(size_t outcome_index, size_t weight_index) {
+ForestTrainer ForestTrainers::regression_trainer(size_t outcome_index, int weight_index) {
   std::unordered_map<size_t, size_t> observables;
   if (weight_index >= 0) {
-    observables = {{Observations::OUTCOME, outcome_index}, {Observations::WEIGHT, weight_index}};
+    observables = {{Observations::OUTCOME, outcome_index}, {Observations::WEIGHT, (size_t) weight_index}};
   } else {
     observables = {{Observations::OUTCOME, outcome_index}};
   }

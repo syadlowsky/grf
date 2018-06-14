@@ -104,12 +104,12 @@ PredictionValues RegressionPredictionStrategy::precompute_prediction_values(
     double weight = 0.0;
     double sample_weight;
     for (auto& sample : leaf_node) {
-      if (observations.get_num_types() >= Observations::WEIGHT) {
+      if (observations.get_num_types() >= Observations::WEIGHT + 1) {
         sample_weight = observations.get(Observations::WEIGHT, sample);
       } else {
         sample_weight = 1.0;
       }
-      average += weight * observations.get(Observations::OUTCOME, sample);
+      average += sample_weight * observations.get(Observations::OUTCOME, sample);
       weight += sample_weight;
     }
     averages[OUTCOME] = average / weight;
