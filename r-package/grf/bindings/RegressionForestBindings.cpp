@@ -2,7 +2,6 @@
 #include <Rcpp.h>
 #include <sstream>
 #include <vector>
-#include <cstdio>
 
 #include "commons/globals.h"
 #include "Eigen/Sparse"
@@ -28,22 +27,17 @@ Rcpp::List regression_train(Rcpp::NumericMatrix input_data,
                             std::vector<size_t> clusters,
                             unsigned int samples_per_cluster) {
   ForestTrainer trainer = ForestTrainers::regression_trainer(outcome_index - 1, weight_index - 1);
-  printf("Trainer made\n");
 
   Data* data = RcppUtilities::convert_data(input_data, sparse_input_data);
   ForestOptions options(num_trees, ci_group_size, sample_fraction, mtry, min_node_size,
       honesty, weight_index > 0, alpha, imbalance_penalty, num_threads, seed, clusters, samples_per_cluster);
-  printf("Options made\n");
 
   Forest forest = trainer.train(data, options);
-  printf("Forest trained\n");
 
   Rcpp::List result = RcppUtilities::create_forest_object(forest, data);
   result.push_back(options.get_tree_options().get_min_node_size(), "min.node.size");
-  printf("result created\n");
 
   delete data;
-  printf("data deleted\n");
   return result;
 }
 
