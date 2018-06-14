@@ -64,7 +64,8 @@ tune_regression_forest <- function(X, Y,
                                    honesty = TRUE,
                                    seed = NULL,
                                    clusters = NULL,
-                                   samples_per_cluster = NULL) {
+                                   samples_per_cluster = NULL,
+				   case.weights = NULL) {
   validate_X(X)
   if(length(Y) != nrow(X)) { stop("Y has incorrect length.") }
   
@@ -74,8 +75,16 @@ tune_regression_forest <- function(X, Y,
   samples_per_cluster <- validate_samples_per_cluster(samples_per_cluster, clusters)
   ci.group.size <- 1
 
-  data <- create_data_matrices(X, Y)
-  outcome.index <- ncol(X) + 1
+  if (!is.null(case.weights)) {
+    if(length(case.weights) != nrow(X)) { stop("case.weights has incorrect length.") }
+    data <- create_data_matrices(X, Y, case.weights)
+    outcome.index <- ncol(X) + 1
+    weight.index <- ncol(X) + 2
+  } else {
+    data <- create_data_matrices(X, Y)
+    outcome.index <- ncol(X) + 1
+    weight.index <- 0
+  }
   
   # Separate out the tuning parameters with supplied values, and those that were
   # left as 'NULL'. We will only tune those parameters that the user didn't supply.
@@ -95,7 +104,7 @@ tune_regression_forest <- function(X, Y,
   debiased.errors = apply(fit.draws, 1, function(draw) {
     params = c(fixed.params, get_params_from_draw(X, draw))
     small.forest <- regression_train(data$default, data$sparse, outcome.index,
-				     0,
+				     weight.index,
                                      as.numeric(params["mtry"]),
                                      num.fit.trees,
                                      num.threads,

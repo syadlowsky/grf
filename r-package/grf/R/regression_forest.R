@@ -73,7 +73,8 @@ regression_forest <- function(X, Y,
                               tune.parameters = FALSE,
                               num.fit.trees = 10,
                               num.fit.reps = 100,
-                              num.optimize.reps = 1000) {
+                              num.optimize.reps = 1000,
+			      case.weights = NULL) {
     validate_X(X)
     if(length(Y) != nrow(X)) { stop("Y has incorrect length.") }
 
@@ -96,7 +97,8 @@ regression_forest <- function(X, Y,
                                               honesty = honesty,
                                               seed = seed,
                                               clusters = clusters,
-                                              samples_per_cluster = samples_per_cluster)
+                                              samples_per_cluster = samples_per_cluster,
+					      case.weights = case.weights)
       tunable.params <- tuning.output$params
     } else {
       tunable.params <- c(
@@ -107,11 +109,20 @@ regression_forest <- function(X, Y,
         imbalance.penalty = validate_imbalance_penalty(imbalance.penalty))
     }
     
-    data <- create_data_matrices(X, Y)
-    outcome.index <- ncol(X) + 1
+    if (!is.null(case.weights)) {
+      if(length(case.weights) != nrow(X)) { stop("case.weights has incorrect length.") }
+      data <- create_data_matrices(X, Y, case.weights)
+      outcome.index <- ncol(X) + 1
+      weight.index <- ncol(X) + 2
+    } else {
+      data <- create_data_matrices(X, Y)
+      outcome.index <- ncol(X) + 1
+      weight.index <- 0
+    }
+
 
     forest <- regression_train(data$default, data$sparse, outcome.index,
-                               0,
+                               weight.index,
                                as.numeric(tunable.params["mtry"]),
                                num.trees,
                                num.threads,
