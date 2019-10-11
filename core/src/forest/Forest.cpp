@@ -21,8 +21,15 @@
 Forest Forest::create(std::vector<std::shared_ptr<Tree>> trees,
                       Data* data,
                       std::unordered_map<size_t, size_t> observables) {
-  size_t num_types = observables.size();
   size_t num_samples = data->get_num_rows();
+
+  size_t num_types = observables.size();
+  for (auto it : observables) {
+    size_t type = it.first;
+    if (type >= num_types) {
+      num_types = type + 1;
+    }
+  }
 
   std::vector<std::vector<double>> observations_by_type(num_types);
   std::set<size_t> disallowed_split_variables;

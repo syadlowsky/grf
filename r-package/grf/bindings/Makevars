@@ -1,5 +1,5 @@
 ## Use c++11
-CXX_STD = CXX11
+CXX_STD = ccache CXX11
 
 PKG_CXXFLAGS = -I. -Isrc -DR_BUILD
 

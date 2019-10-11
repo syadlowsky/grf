@@ -33,6 +33,18 @@ test_that("regression variance estimates are positive", {
 	expect_true(mean(abs(Z.oob) > 1) < 0.5)
 })
 
+test_that("regression forest case weights work", {
+	n = 1000
+	p = 6
+	X = matrix(rnorm(n*p), n, p)
+	Y = 1000 * (X[,1]) + rnorm(n)
+	w = 1 / (1 + exp(0.3 * X[,2]))
+	rrr = regression_forest(X, Y, case.weights=w)
+	preds.oob = predict(rrr)
+
+	expect_equal(n, nrow(preds.oob$predictions))
+})
+
 test_that("regression forest split frequencies are reasonable", {
 	n = 100
 	p = 6
