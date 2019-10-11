@@ -15,19 +15,22 @@
   along with grf. If not, see <http://www.gnu.org/licenses/>.
  #-------------------------------------------------------------------------------*/
 
-#ifndef GRF_BOOTSTRAPSAMPLER_H
-#define GRF_BOOTSTRAPSAMPLER_H
+#ifndef GRF_RANDOMSAMPLER_H
+#define GRF_RANDOMSAMPLER_H
 
 
 #include "commons/globals.h"
 #include "commons/utility.h"
 #include "SamplingOptions.h"
+#include "random/random.hpp"
+#include "random/algorithm.hpp"
 
 #include <cstddef>
 #include <random>
 #include <set>
 #include <vector>
-#include <unordered_map>
+
+namespace grf {
 
 class RandomSampler {
 public:
@@ -136,15 +139,17 @@ private:
                      size_t num_samples,
                      const std::vector<double>& weights);
 
-  /**
-   * Knuth's algorithm for sampling without replacement, faster for larger num_samples
-   * Idea from Knuth 1985, The Art of Computer Programming, Vol. 2, Sec. 3.4.2 Algorithm S
+
+
+    /**
+   * Fisher-Yates algorithm for sampling without replacement, faster for larger num_samples
+   * Idea from Knuth 1985, The Art of Computer Programming, Vol. 2, Sec. 3.4.2 Algorithm P
    * @param result Vector to add results to. Will not be cleaned before filling.
    * @param max Specifies the interval to draw from:  0 ... (max-1).
    * @param skip Values to skip
    * @param num_samples Number of samples to draw
    */
-  void draw_knuth(std::vector<size_t>& result,
+  void draw_fisher_yates(std::vector<size_t>& result,
                   size_t max,
                   const std::set<size_t>& skip,
                   size_t num_samples);
@@ -153,5 +158,6 @@ private:
   std::mt19937_64 random_number_generator;
 };
 
+} // namespace grf
 
-#endif //GRF_BOOTSTRAPSAMPLER_H
+#endif //GRF_RANDOMSAMPLER_H

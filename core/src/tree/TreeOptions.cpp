@@ -17,28 +17,41 @@
 
 #include "tree/TreeOptions.h"
 
+namespace grf {
 
 TreeOptions::TreeOptions(uint mtry,
                          uint min_node_size,
                          bool honesty,
+                         double honesty_fraction,
+                         bool honesty_prune_leaves,
                          double alpha,
                          double imbalance_penalty):
   mtry(mtry),
   min_node_size(min_node_size),
   honesty(honesty),
+  honesty_fraction(honesty_fraction),
+  honesty_prune_leaves(honesty_prune_leaves),
   alpha(alpha),
   imbalance_penalty(imbalance_penalty) {}
 
-uint TreeOptions::get_mtry() const  {
+uint TreeOptions::get_mtry() const {
   return mtry;
 }
 
-uint TreeOptions::get_min_node_size() const  {
+uint TreeOptions::get_min_node_size() const {
   return min_node_size;
 }
 
 bool TreeOptions::get_honesty() const {
   return honesty;
+}
+
+double TreeOptions::get_honesty_fraction() const {
+  return honesty_fraction;
+}
+
+bool TreeOptions::get_honesty_prune_leaves() const {
+  return honesty_prune_leaves;
 }
 
 double TreeOptions::get_alpha() const {
@@ -48,3 +61,5 @@ double TreeOptions::get_alpha() const {
 double TreeOptions::get_imbalance_penalty() const {
   return imbalance_penalty;
 }
+
+} // namespace grf

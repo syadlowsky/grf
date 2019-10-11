@@ -20,29 +20,27 @@
 
 #include "forest/ForestPredictor.h"
 
-class ForestPredictors {
-public:
-  static ForestPredictor custom_predictor(uint num_threads);
+namespace grf {
 
-  static ForestPredictor instrumental_predictor(uint num_threads,
-                                                uint ci_group_size);
+ForestPredictor custom_predictor(uint num_threads);
 
-  static ForestPredictor quantile_predictor(uint num_threads,
-                                            const std::vector<double>& quantiles);
+ForestPredictor instrumental_predictor(uint num_threads);
 
-  static ForestPredictor regression_predictor(uint num_threads,
-                                              uint ci_group_size);
+ForestPredictor quantile_predictor(uint num_threads,
+                                   const std::vector<double>& quantiles);
 
-  static ForestPredictor local_linear_predictor(uint num_threads,
-                                                const Data*original_data,
-                                                const Data *test_data,
-                                                double lambda,
-                                                bool ridge_type,
-                                                std::vector<size_t> linear_correction_variables);
+ForestPredictor regression_predictor(uint num_threads);
 
-private:
-  static uint get_num_threads(uint provided_num_threads);
-};
+ForestPredictor ll_regression_predictor(uint num_threads,
+                                        std::vector<double> lambdas,
+                                        bool weight_penalty,
+                                        std::vector<size_t> linear_correction_variables);
 
+ForestPredictor ll_causal_predictor(uint num_threads,
+                                   std::vector<double> lambdas,
+                                   bool weight_penalty,
+                                   std::vector<size_t> linear_correction_variables);
+
+} // namespace grf
 
 #endif //GRF_FORESTPREDICTORS_H

@@ -18,32 +18,49 @@
 #ifndef GRF_FOREST_H_
 #define GRF_FOREST_H_
 
-#include <memory>
-
-#include "tree/TreeTrainer.h"
-#include "commons/globals.h"
-#include "tree/Tree.h"
 #include "commons/DefaultData.h"
-#include "commons/Observations.h"
+#include "commons/globals.h"
+#include "forest/ForestOptions.h"
+#include "tree/TreeTrainer.h"
+#include "tree/Tree.h"
+
+namespace grf {
 
 class Forest {
 public:
-  static Forest create(std::vector<std::shared_ptr<Tree>> trees,
-                       Data* data,
-                       std::unordered_map<size_t, size_t> observables);
+  Forest(std::vector<std::unique_ptr<Tree>>& trees,
+         size_t num_variables,
+         size_t ci_group_size);
 
-  Forest(const std::vector<std::shared_ptr<Tree>>& trees,
-         const Observations& observations,
-         size_t num_variables);
+  Forest(Forest&& forest);
 
-  const Observations& get_observations() const;
-  const std::vector<std::shared_ptr<Tree>>& get_trees() const;
+  const std::vector<std::unique_ptr<Tree>>& get_trees() const;
+
+  /**
+   * A method intended for internal use that allows the list of
+   * trees to be modified.
+   */
+  std::vector<std::unique_ptr<Tree>>& get_trees_();
+
   const size_t get_num_variables() const;
+  const size_t get_ci_group_size() const;
 
+  /**
+   * Merges the given forests into a single forest. The new forest
+   * will contain all the trees from the smaller forests.
+   *
+   * NOTE: this is a destructive operation -- the original forests cannot
+   * be used after they are merged together.
+   */
+  static Forest merge(std::vector<Forest>& forests);
+  
 private:
-  std::vector<std::shared_ptr<Tree>> trees;
-  Observations observations;
+  std::vector<std::unique_ptr<Tree>> trees;
   size_t num_variables;
+  size_t ci_group_size;
+  DISALLOW_COPY_AND_ASSIGN(Forest);
 };
+
+} // namespace grf
 
 #endif /* GRF_FOREST_H_ */

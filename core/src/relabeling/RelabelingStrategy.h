@@ -20,25 +20,32 @@
 
 
 #include "commons/DefaultData.h"
-#include "commons/Observations.h"
-#include <unordered_map>
+#include "commons/Data.h"
 #include <vector>
+
+namespace grf {
 
 /**
  * Produces a relabelled set of outcomes for a set of training samples. These outcomes
  * will then be used in calculating a standard regression (or classification) split.
- *
- * samples: the subset of samples to relabel.
- * observations: the list of observations for all training samples.
- *
- * returns: a map from sample ID to a relabelled outcome.
  */
 class RelabelingStrategy {
 public:
-  virtual std::unordered_map<size_t, double> relabel(
-      const std::vector<size_t>& samples,
-      const Observations& observations) = 0;
+
+  virtual ~RelabelingStrategy() = default;
+
+ /**
+   * samples: the subset of samples to relabel.
+   * data: the training data matrix.
+   * responses_by_sample: the output of the method, containing a map from sample ID to relabelled response.
+   *
+   * returns: a boolean that will be 'true' if splitting should stop early.
+   */
+  virtual bool relabel(const std::vector<size_t>& samples,
+                       const Data& data,
+                       std::vector<double>& responses_by_sample) const = 0;
 };
 
+} // namespace grf
 
 #endif //GRF_RELABELINGSTRATEGY_H

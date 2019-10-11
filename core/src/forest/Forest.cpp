@@ -15,50 +15,64 @@
   along with grf. If not, see <http://www.gnu.org/licenses/>.
  #-------------------------------------------------------------------------------*/
 
+#include <stdexcept>
+
 #include "commons/DefaultData.h"
 #include "forest/Forest.h"
 
-Forest Forest::create(std::vector<std::shared_ptr<Tree>> trees,
-                      Data* data,
-                      std::unordered_map<size_t, size_t> observables) {
-  size_t num_types = observables.size();
-  size_t num_samples = data->get_num_rows();
+namespace grf {
 
-  std::vector<std::vector<double>> observations_by_type(num_types);
-  std::set<size_t> disallowed_split_variables;
-
-  for (auto it : observables) {
-    size_t type = it.first;
-    size_t index = it.second;
-
-    observations_by_type[type].resize(num_samples);
-    for (size_t row = 0; row < num_samples; ++row) {
-      observations_by_type[type][row] = data->get(row, index);
-    }
-    disallowed_split_variables.insert(index);
-  }
-
-  Observations observations(observations_by_type, num_samples);
-  size_t num_independent_variables = data->get_num_cols() - disallowed_split_variables.size();
-
-  return Forest(trees, observations, num_independent_variables);
+Forest::Forest(std::vector<std::unique_ptr<Tree>>& trees,
+               size_t num_variables,
+               size_t ci_group_size) {
+  this->trees.insert(this->trees.end(),
+                     std::make_move_iterator(trees.begin()),
+                     std::make_move_iterator(trees.end()));
+  this->num_variables = num_variables;
+  this->ci_group_size = ci_group_size;
 }
 
-Forest::Forest(const std::vector<std::shared_ptr<Tree>>& trees,
-               const Observations& observations,
-               size_t num_variables):
-  trees(trees),
-  observations(observations),
-  num_variables(num_variables) {}
+Forest::Forest(Forest&& forest) {
+  this->trees.insert(this->trees.end(),
+                     std::make_move_iterator(forest.trees.begin()),
+                     std::make_move_iterator(forest.trees.end()));
+  this->num_variables = forest.num_variables;
+  this->ci_group_size = forest.ci_group_size;
+}
 
-const Observations& Forest::get_observations() const {
-  return observations;
-};
+Forest Forest::merge(std::vector<Forest>& forests) {
+  std::vector<std::unique_ptr<Tree>> all_trees;
+  const size_t num_variables = forests.at(0).get_num_variables();
+  const size_t ci_group_size = forests.at(0).get_ci_group_size();
 
-const std::vector<std::shared_ptr<Tree>>& Forest::get_trees() const {
+  for (auto& forest : forests) {
+    auto& trees = forest.get_trees_();
+    all_trees.insert(all_trees.end(),
+                     std::make_move_iterator(trees.begin()),
+                     std::make_move_iterator(trees.end()));
+
+    if (forest.get_ci_group_size() != ci_group_size) {
+      throw std::runtime_error("All forests being merged must have the same ci_group_size.");
+    }
+  }
+
+  return Forest(all_trees, num_variables, ci_group_size);
+}
+
+const std::vector<std::unique_ptr<Tree>>& Forest::get_trees() const {
+  return trees;
+}
+
+std::vector<std::unique_ptr<Tree>>& Forest::get_trees_() {
   return trees;
 }
 
 const size_t Forest::get_num_variables() const {
   return num_variables;
 }
+
+const size_t Forest::get_ci_group_size() const {
+  return ci_group_size;
+}
+
+} // namespace grf

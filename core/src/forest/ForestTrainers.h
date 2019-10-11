@@ -20,21 +20,17 @@
 
 #include "forest/ForestTrainer.h"
 
-class ForestTrainers {
-public:
-  static ForestTrainer instrumental_trainer(size_t outcome_index,
-                                            size_t treatment_index,
-                                            size_t instrument_index,
-                                            double reduced_form_weight,
-                                            bool stabilize_splits);
+namespace grf {
 
-  static ForestTrainer quantile_trainer(size_t outcome_index,
-                                        const std::vector<double>& quantiles);
+ForestTrainer instrumental_trainer(double reduced_form_weight,
+                                   bool stabilize_splits);
 
-  static ForestTrainer regression_trainer(size_t outcome_index);
+ForestTrainer quantile_trainer(const std::vector<double>& quantiles);
 
-  static ForestTrainer custom_trainer(size_t outcome_index);
-};
+ForestTrainer regression_trainer();
 
+ForestTrainer custom_trainer();
+
+} // namespace grf
 
 #endif //GRF_FORESTTRAINERS_H

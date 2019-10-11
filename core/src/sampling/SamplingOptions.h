@@ -20,10 +20,11 @@
 
 
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "commons/globals.h"
+
+namespace grf {
 
 class SamplingOptions {
 public:
@@ -36,7 +37,7 @@ public:
   /**
    * A map from each cluster ID to the set of sample IDs it contains.
    */
-  const std::vector<std::vector<size_t>>& get_clusters();
+  const std::vector<std::vector<size_t>>& get_clusters() const;
 
   /**
    * The number of samples that should be drawn from each cluster when
@@ -49,5 +50,7 @@ private:
   uint num_samples_per_cluster;
   std::vector<std::vector<size_t>> clusters;
 };
+
+} // namespace grf
 
 #endif //GRF_SAMPLINGOPTIONS_H

@@ -32,35 +32,38 @@
 #include <set>
 #include <thread>
 
+namespace grf {
+
 class ForestTrainer {
 public:
-  ForestTrainer(const std::unordered_map<size_t, size_t>& observables,
-                std::shared_ptr<RelabelingStrategy> relabeling_strategy,
-                std::shared_ptr<SplittingRuleFactory> splitting_rule_factory,
-                std::shared_ptr<OptimizedPredictionStrategy> prediction_strategy);
-  const Forest train(Data* data, const ForestOptions& options) const;
+  ForestTrainer(std::unique_ptr<RelabelingStrategy> relabeling_strategy,
+                std::unique_ptr<SplittingRuleFactory> splitting_rule_factory,
+                std::unique_ptr<OptimizedPredictionStrategy> prediction_strategy);
+
+  Forest train(const Data& data, const ForestOptions& options) const;
 
 private:
 
-  std::vector<std::shared_ptr<Tree>> train_batch(
-      size_t start, size_t num_trees,
-      Data* data,
-      const Observations& observations,
+  std::vector<std::unique_ptr<Tree>> train_trees(const Data& data,
+                                                 const ForestOptions& options) const;
+
+  std::vector<std::unique_ptr<Tree>> train_batch(
+      size_t start,
+      size_t num_trees,
+      const Data& data,
       const ForestOptions& options) const;
 
-  std::shared_ptr<Tree> train_tree(Data* data,
-                                   const Observations& observations,
+  std::unique_ptr<Tree> train_tree(const Data& data,
                                    RandomSampler& sampler,
                                    const ForestOptions& options) const;
 
-  std::vector<std::shared_ptr<Tree>> train_ci_group(Data* data,
-                                                    const Observations& observations,
+  std::vector<std::unique_ptr<Tree>> train_ci_group(const Data& data,
                                                     RandomSampler& sampler,
                                                     const ForestOptions& options) const;
 
-  std::unordered_map<size_t, size_t> observables;
   TreeTrainer tree_trainer;
 };
 
+} // namespace grf
 
 #endif //GRF_FORESTTRAINER_H

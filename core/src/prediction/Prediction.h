@@ -15,22 +15,27 @@
   along with grf. If not, see <http://www.gnu.org/licenses/>.
  #-------------------------------------------------------------------------------*/
 
-#ifndef GRF_PREDICTIONRESULTS_H
-#define GRF_PREDICTIONRESULTS_H
+#ifndef GRF_PREDICTION_H
+#define GRF_PREDICTION_H
 
 #include <cstddef>
 #include <vector>
 
+namespace grf {
+
 class Prediction {
 public:
   Prediction(const std::vector<double>& predictions);
+
   Prediction(const std::vector<double>& predictions,
              const std::vector<double>& variance_estimates,
-             const std::vector<double>& error_estimates);
+             const std::vector<double>& error_estimates,
+             const std::vector<double>& excess_error_estimates);
 
   const std::vector<double>& get_predictions() const;
   const std::vector<double>& get_variance_estimates() const;
   const std::vector<double>& get_error_estimates() const;
+  const std::vector<double>& get_excess_error_estimates() const;
   const bool contains_variance_estimates() const;
   const bool contains_error_estimates() const;
   const size_t size() const;
@@ -39,7 +44,9 @@ private:
   std::vector<double> predictions;
   std::vector<double> variance_estimates;
   std::vector<double> error_estimates;
+  std::vector<double> excess_error_estimates;
 };
 
+} // namespace grf
 
-#endif //GRF_PREDICTIONRESULTS_H
+#endif //GRF_PREDICTION_H

@@ -23,15 +23,18 @@
 #include "sampling/SamplingOptions.h"
 #include "tree/TreeOptions.h"
 
+namespace grf {
 
 class ForestOptions {
 public:
   ForestOptions(uint num_trees,
-                uint ci_group_size,
+                size_t ci_group_size,
                 double sample_fraction,
                 uint mtry,
                 uint min_node_size,
                 bool honesty,
+                double honesty_fraction,
+                bool honesty_prune_leaves,
                 double alpha,
                 double imbalance_penalty,
                 uint num_threads,
@@ -42,7 +45,7 @@ public:
   static uint validate_num_threads(uint num_threads);
 
   uint get_num_trees() const;
-  uint get_ci_group_size() const;
+  size_t get_ci_group_size() const;
   double get_sample_fraction() const;
 
   const TreeOptions& get_tree_options() const;
@@ -53,7 +56,7 @@ public:
 
 private:
   uint num_trees;
-  uint ci_group_size;
+  size_t ci_group_size;
   double sample_fraction;
 
   TreeOptions tree_options;
@@ -63,5 +66,6 @@ private:
   uint random_seed;
 };
 
+} // namespace grf
 
 #endif //GRF_FORESTOPTIONS_H

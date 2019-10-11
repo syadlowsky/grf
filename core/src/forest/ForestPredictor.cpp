@@ -15,40 +15,59 @@
   along with grf. If not, see <http://www.gnu.org/licenses/>.
  #-------------------------------------------------------------------------------*/
 
+#include <stdexcept>
+
 #include "forest/ForestPredictor.h"
 #include "prediction/collector/OptimizedPredictionCollector.h"
 #include "prediction/collector/DefaultPredictionCollector.h"
 #include "commons/utility.h"
 
-ForestPredictor::ForestPredictor(uint num_threads,
-                                 std::shared_ptr<DefaultPredictionStrategy> strategy) :
-    tree_traverser(num_threads) {
-  this->prediction_collector = std::shared_ptr<PredictionCollector>(
-        new DefaultPredictionCollector(strategy));
-}
+namespace grf {
 
 ForestPredictor::ForestPredictor(uint num_threads,
-                                 uint ci_group_size,
-                                 std::shared_ptr<OptimizedPredictionStrategy> strategy) :
+                                 std::unique_ptr<DefaultPredictionStrategy> strategy) :
     tree_traverser(num_threads) {
-  this->prediction_collector = std::shared_ptr<PredictionCollector>(
-      new OptimizedPredictionCollector(strategy, ci_group_size));
+  this->prediction_collector = std::unique_ptr<PredictionCollector>(
+        new DefaultPredictionCollector(std::move(strategy)));
 }
 
-std::vector<Prediction> ForestPredictor::predict(const Forest& forest, Data* data) const {
-  return predict(forest, data, false);
+ForestPredictor::ForestPredictor(uint num_threads,
+                                 std::unique_ptr<OptimizedPredictionStrategy> strategy) :
+    tree_traverser(num_threads) {
+  this->prediction_collector = std::unique_ptr<PredictionCollector>(
+      new OptimizedPredictionCollector(std::move(strategy)));
 }
 
-std::vector<Prediction> ForestPredictor::predict_oob(const Forest& forest, Data* data) const {
-  return predict(forest, data, true);
+
+std::vector<Prediction> ForestPredictor::predict(const Forest& forest,
+                                                 const Data& train_data,
+                                                 const Data& data,
+                                                 bool estimate_variance) const {
+  return predict(forest, train_data, data, estimate_variance, false);
+}
+
+std::vector<Prediction> ForestPredictor::predict_oob(const Forest& forest,
+                                                     const Data& data,
+                                                     bool estimate_variance) const {
+  return predict(forest, data, data, estimate_variance, true);
 }
 
 std::vector<Prediction> ForestPredictor::predict(const Forest& forest,
-                                                 Data* data,
+                                                 const Data& train_data,
+                                                 const Data& data,
+                                                 bool estimate_variance,
                                                  bool oob_prediction) const {
+  if (estimate_variance && forest.get_ci_group_size() <= 1) {
+    throw std::runtime_error("To estimate variance during prediction, the forest must"
+       " be trained with ci_group_size greater than 1.");
+  }
+
   std::vector<std::vector<size_t>> leaf_nodes_by_tree = tree_traverser.get_leaf_nodes(forest, data, oob_prediction);
   std::vector<std::vector<bool>> trees_by_sample = tree_traverser.get_valid_trees_by_sample(forest, data, oob_prediction);
 
-  return prediction_collector->collect_predictions(
-      forest, data, leaf_nodes_by_tree, trees_by_sample, oob_prediction);
+  return prediction_collector->collect_predictions(forest, train_data, data,
+      leaf_nodes_by_tree, trees_by_sample,
+      estimate_variance, oob_prediction);
 }
+
+} // namespace grf

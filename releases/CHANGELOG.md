@@ -1,8 +1,75 @@
 # Changelog
-All notable changes to this project will be documented in this file.
+All notable changes to grf will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+
+## [0.10.4] - 2019-09-01
+
+### Changed (breaking)
+**IMPORTANT** These changes might cause small differences in results compared to previous releases, even if the same random seed is used.
+- Ensure forest estimates are consistent across platforms. [#469](https://github.com/grf-labs/grf/pull/469), [#492](https://github.com/grf-labs/grf/pull/492)
+- The number of trees used for orthogonalization was changed from `min(500, num.trees)` to `max(50, num.trees / 4)`. [#439](https://github.com/grf-labs/grf/pull/439)
+- Solidify the parameter tuning procedure. If the optimization procedure fails, or if the selected parameters perform worse than defaults, we now return default parameters instead. [#455](https://github.com/grf-labs/grf/pull/455)
+- Introduce parameters `honesty.fraction` and `prune.empty.leaves` to help mitigate the effect of honesty on small datasets, and tune over them when `tune.parameters=TRUE`. [#456](https://github.com/grf-labs/grf/pull/456), [#484](https://github.com/grf-labs/grf/pull/484)
+
+### Added
+- Add variance estimates for local linear forests. [#442](https://github.com/grf-labs/grf/pull/442)
+- Include information about leaf samples in plotting and printing. [#460](https://github.com/grf-labs/grf/pull/460)
+- Add example of saving a plot with DiagrammeRsvg. [#478](https://github.com/grf-labs/grf/pull/478)
+- Support average effect estimates for instrumental forests (ACLATE). [#490](https://github.com/grf-labs/grf/pull/490)
+
+### Fixed
+- Performance improvements to forest training. [#514](https://github.com/grf-labs/grf/pull/514)
+
+## [0.10.3] - 2019-06-01
+
+### Changed (breaking)
+**IMPORTANT** These changes might cause small differences in results compared to previous releases, even if the same random seed is used.
+- Fix two bugs in the termination criterion for tree splitting.
+  - Remove the purity condition on outcomes during splitting. For all tree types, we used to stop splitting if all outcomes in a leaf are the same. This behavior does not make sense for causal forests (which incorporates other observations besides the outcome), so it was removed. [#362](https://github.com/grf-labs/grf/pull/362)
+  - Stop splitting if the objective can no longer be improved. With this change, `causal_forest` may split slightly less aggressively. [#415](https://github.com/grf-labs/grf/pull/415)
+
+### Added
+- In out-of-bag prediction, return the Monte Carlo error alongside the debiased error. [#327](https://github.com/grf-labs/grf/pull/327)
+- Allow for passing a factor for the `cluster` parameter. [#329](https://github.com/grf-labs/grf/pull/329)
+- Support taking a union of forests through the `merge_forests` method. [#347](https://github.com/grf-labs/grf/pull/347)
+- Include a summary of the parameter tuning procedure in the forest object. [#419](https://github.com/grf-labs/grf/pull/419)
+- Add experimental support for sample weighting to regression, causal, and instrumental forests. [#376](https://github.com/grf-labs/grf/pull/376), [#418](https://github.com/grf-labs/grf/pull/418)
+- Add an experimental new forest type `boosted_regression_forest`, which applies boosting to regression forests. Allow boosting to be used during orthogonalization through the `orthog.boosting` parameter. [#388](https://github.com/grf-labs/grf/pull/388)
+
+### Fixed
+- Improve input data validation. [#354](https://github.com/grf-labs/grf/pull/354), [#378](https://github.com/grf-labs/grf/pull/378), [#430](https://github.com/grf-labs/grf/pull/430)
+- Improve the `test_calibration` function by switching to one-sided p-values. [#370](https://github.com/grf-labs/grf/pull/370)
+- For custom forests, fix a bug in OOB prediction where the train and tests datasets were switched. [#372](https://github.com/grf-labs/grf/pull/372)
+- Decrease memory usage during training and out-of-bag prediction. [#408](https://github.com/grf-labs/grf/pull/408), [#412](https://github.com/grf-labs/grf/pull/412)
+- Allow roxygen to autogenerate the `NAMESPACE` file. [#423](https://github.com/grf-labs/grf/pull/423), [#428](https://github.com/grf-labs/grf/pull/428)
+
+## [0.10.2] - 2018-11-23
+### Added
+- Add support for confidence intervals in local linear regression forests.
+
+### Changed
+- Allow samples_per_cluster to be larger than smallest cluster size.
+
+### Fixed
+- Make sure average effect estimation doesn't error on data with a single feature.
+- Fix a bug in local linear prediction where the penalty wasn't properly calculated.
+- Fix two issues in causal forest tuning that could lead to unstable results.
+- Ensure that the ATE and APE functions correctly account for cluster membership.
+
+## [0.10.1] - 2018-09-23
+### Added
+- Add basic support for tree plotting (through the `plot` method).
+- Add the method `test_calibration`, which performs an omnibus test for presence of heterogeneity via calibration.
+- For local linear regression forests, add support for selecting the value of `ll.lambda` through cross-validation.
+- Introduce a training option `honesty.fraction` that can be used to specify the fraction of data that should be used in selecting splits vs. performing estimation. Note that this parameter is only relevant when honesty is enabled (the default).
+- Start a practical guide to the GRF algorithm (https://github.com/grf-labs/grf/blob/master/REFERENCE.md).
+- In `average_treatment_effect` and `average_partial_effect`, add an option `subset` to support estimating the treatment effect over a subsample of the data.
+
+### Fixed
+- Fix a bug in random sampling where features listed earlier in the data matrix were more likely to be selected for splitting.
+- Make sure that the sample indices returned in `get_tree` are 1-indexed, as opposed to 0-indexed.
 
 ## [0.10.0] - 2018-05-08
 ### Added
@@ -55,7 +122,7 @@ causing poor performance for even moderately large numbers of features.
 ## [0.9.4] - 2017-11-25
 
 ### Changed
-- Update the default for mtry to sqrt(p) + 20. 
+- Update the default for mtry to sqrt(p) + 20.
 
 ### Fixed
 - Fix an issue where split_frequencies fails when p = 1.

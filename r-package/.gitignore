@@ -7,7 +7,10 @@
 # R session files
 .Rproj.user
 .Rhistory
-.RData
+*.RData
+*.Rout
+inst/doc
+docs/
 
 # compiled object files
 *.so
@@ -21,9 +24,6 @@
 
 # clion files
 .idea/
-
-# copied src files
-grf/src/*
 
 # documentation by roxygen
 *.Rd

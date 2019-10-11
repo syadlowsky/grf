@@ -1,23 +1,32 @@
+# Builds and tests the GRF package.
+#
+# To build the package for development:
+#   `Rscript build_package.R`
+#
+# To prepare a CRAN build:
+#   `Rscript build_package.R --as-cran`
+
+args <- commandArgs(TRUE)
 library(Rcpp)
 library(devtools)
 library(testthat)
 library(roxygen2)
 
 package.name <- "grf"
-package.src <- "grf/src"
 
-# Copy Rcpp bindings and C++ source into the package src directory.
-unlink(package.src, recursive = TRUE)
-dir.create(package.src)
-
-binding.files <- list.files("grf/bindings", full.names = TRUE)
-file.copy(binding.files, package.src, recursive = FALSE)
-file.copy("../core/src", package.src, recursive = TRUE)
+# If built for CRAN, exlude all test except ones with "cran" in the filename
+# by adding the following regex to .Rbuildignore.
+if (!is.na(args[1]) && args[1] == "--as-cran") {
+  write_union("grf/.Rbuildignore", "^tests/testthat/test_((?!cran).).*")
+}
 
 # Auto-generate documentation files
 roxygen2::roxygenise(package.name)
 
 # Run Rcpp and build the package.
+# Symlinks in `grf/src` point to the Rcpp bindings (`grf/bindings`) and core C++ (`core/src`).
+# Note: we don't link in third_party/Eigen, because for the R package build we provide
+# access to the library through RcppEigen.
 compileAttributes(package.name)
 clean_dll(package.name)
 build(package.name)

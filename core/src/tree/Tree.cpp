@@ -21,6 +21,8 @@
 #include "tree/Tree.h"
 #include "commons/utility.h"
 
+namespace grf {
+
 Tree::Tree(size_t root_node,
            const std::vector<std::vector<size_t>>& child_nodes,
            const std::vector<std::vector<size_t>>& leaf_samples,
@@ -36,49 +38,49 @@ Tree::Tree(size_t root_node,
     drawn_samples(drawn_samples),
     prediction_values(prediction_values) {}
 
-size_t Tree::get_root_node() {
+size_t Tree::get_root_node() const {
   return root_node;
 }
 
-const std::vector<std::vector<size_t>>& Tree::get_child_nodes() {
+const std::vector<std::vector<size_t>>& Tree::get_child_nodes() const {
   return child_nodes;
 }
 
-const std::vector<std::vector<size_t>>& Tree::get_leaf_samples() {
+const std::vector<std::vector<size_t>>& Tree::get_leaf_samples() const {
   return leaf_samples;
 }
 
-const std::vector<size_t>& Tree::get_split_vars() {
+const std::vector<size_t>& Tree::get_split_vars() const  {
   return split_vars;
 }
 
-const std::vector<double>& Tree::get_split_values() {
+const std::vector<double>& Tree::get_split_values() const  {
   return split_values;
 }
 
-const std::vector<size_t>& Tree::get_drawn_samples() {
+const std::vector<size_t>& Tree::get_drawn_samples() const  {
   return drawn_samples;
 }
 
-const PredictionValues& Tree::get_prediction_values() {
+const PredictionValues& Tree::get_prediction_values() const  {
   return prediction_values;
 }
 
-std::vector<size_t> Tree::find_leaf_nodes(Data* prediction_data,
-                                          const std::vector<size_t>& samples) {
+std::vector<size_t> Tree::find_leaf_nodes(const Data& data,
+                                          const std::vector<size_t>& samples) const  {
   std::vector<size_t> prediction_leaf_nodes;
-  prediction_leaf_nodes.resize(prediction_data->get_num_rows());
+  prediction_leaf_nodes.resize(data.get_num_rows());
 
   for (size_t sample : samples) {
-    size_t node = find_leaf_node(prediction_data, sample);
+    size_t node = find_leaf_node(data, sample);
     prediction_leaf_nodes[sample] = node;
   }
   return prediction_leaf_nodes;
 }
 
-std::vector<size_t> Tree::find_leaf_nodes(Data* prediction_data,
-                                          const std::vector<bool>& valid_samples) {
-  size_t num_samples = prediction_data->get_num_rows();
+std::vector<size_t> Tree::find_leaf_nodes(const Data& data,
+                                          const std::vector<bool>& valid_samples) const  {
+  size_t num_samples = data.get_num_rows();
 
   std::vector<size_t> prediction_leaf_nodes;
   prediction_leaf_nodes.resize(num_samples);
@@ -88,7 +90,7 @@ std::vector<size_t> Tree::find_leaf_nodes(Data* prediction_data,
       continue;
     }
 
-    size_t node = find_leaf_node(prediction_data, sample);
+    size_t node = find_leaf_node(data, sample);
     prediction_leaf_nodes[sample] = node;
   }
   return prediction_leaf_nodes;
@@ -103,8 +105,8 @@ void Tree::set_prediction_values(const PredictionValues& prediction_values) {
 }
 
 
-size_t Tree::find_leaf_node(Data* prediction_data,
-                            size_t sample) {
+size_t Tree::find_leaf_node(const Data& data,
+                            size_t sample) const  {
   size_t node = root_node;
   while (true) {
     // Break if terminal node
@@ -114,7 +116,7 @@ size_t Tree::find_leaf_node(Data* prediction_data,
 
     // Move to child
     size_t split_var = get_split_vars()[node];
-    double value = prediction_data->get(sample, split_var);
+    double value = data.get(sample, split_var);
     if (value <= get_split_values()[node]) {
       // Move to left child
       node = child_nodes[0][node];
@@ -126,7 +128,7 @@ size_t Tree::find_leaf_node(Data* prediction_data,
   return node;
 };
 
-void Tree::prune_empty_leaves() {
+void Tree::honesty_prune_leaves() {
   size_t num_nodes = leaf_samples.size();
   for (size_t n = num_nodes; n > root_node; n--) {
     size_t node = n - 1;
@@ -166,11 +168,12 @@ void Tree::prune_node(size_t& node) {
   }
 }
 
-bool Tree::is_leaf(size_t node) {
+bool Tree::is_leaf(size_t node) const  {
   return child_nodes[0][node] == 0 && child_nodes[1][node] == 0;
 }
 
-bool Tree::is_empty_leaf(size_t node) {
+bool Tree::is_empty_leaf(size_t node) const  {
   return is_leaf(node) && leaf_samples[node].empty();
 }
 
+} // namespace grf

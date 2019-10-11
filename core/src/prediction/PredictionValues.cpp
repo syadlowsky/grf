@@ -17,15 +17,16 @@
 
 #include "prediction/PredictionValues.h"
 
+namespace grf {
+
 PredictionValues::PredictionValues():
   num_nodes(0),
   num_types(0) {}
 
 PredictionValues::PredictionValues(const std::vector<std::vector<double>>& values,
-                                   size_t num_nodes,
                                    size_t num_types):
   values(values),
-  num_nodes(num_nodes),
+  num_nodes(values.size()),
   num_types(num_types) {}
 
 
@@ -42,6 +43,10 @@ double PredictionValues::empty(std::size_t node) const {
   return values.at(node).empty();
 }
 
+const std::vector<std::vector<double>>& PredictionValues::get_all_values() const {
+  return values;
+}
+
 const size_t PredictionValues::get_num_nodes() const {
   return num_nodes;
 }
@@ -49,3 +54,11 @@ const size_t PredictionValues::get_num_nodes() const {
 const size_t PredictionValues::get_num_types() const {
   return num_types;
 }
+
+void PredictionValues::clear() {
+  num_nodes = 0;
+  num_types = 0;
+  values.clear();
+}
+
+} // namespace grf

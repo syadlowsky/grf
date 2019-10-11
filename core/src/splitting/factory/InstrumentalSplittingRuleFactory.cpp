@@ -18,14 +18,15 @@
 #include "splitting/factory/InstrumentalSplittingRuleFactory.h"
 #include "splitting/InstrumentalSplittingRule.h"
 
-InstrumentalSplittingRuleFactory::InstrumentalSplittingRuleFactory() {}
+namespace grf {
 
-std::shared_ptr<SplittingRule> InstrumentalSplittingRuleFactory::create(Data* data,
-                                                                        const Observations& observations,
-                                                                        const TreeOptions& options) {
-  return std::shared_ptr<SplittingRule>(new InstrumentalSplittingRule(data,
-      observations,
+std::unique_ptr<SplittingRule> InstrumentalSplittingRuleFactory::create(const Data& data,
+                                                                        const TreeOptions& options) const {
+  return std::unique_ptr<SplittingRule>(new InstrumentalSplittingRule(
+      data.get_max_num_unique_values(),
       options.get_min_node_size(),
       options.get_alpha(),
       options.get_imbalance_penalty()));
 }
+
+} // namespace grf

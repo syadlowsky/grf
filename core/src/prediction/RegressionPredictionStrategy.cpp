@@ -19,20 +19,22 @@
 #include <string>
 #include "prediction/RegressionPredictionStrategy.h"
 
+namespace grf {
+
 const size_t RegressionPredictionStrategy::OUTCOME = 0;
 
-size_t RegressionPredictionStrategy::prediction_length() {
+size_t RegressionPredictionStrategy::prediction_length() const {
     return 1;
 }
 
-std::vector<double> RegressionPredictionStrategy::predict(const std::vector<double>& average) {
+std::vector<double> RegressionPredictionStrategy::predict(const std::vector<double>& average) const {
   return { average.at(OUTCOME) };
 }
 
 std::vector<double> RegressionPredictionStrategy::compute_variance(
     const std::vector<double>& average,
     const PredictionValues& leaf_values,
-    uint ci_group_size) {
+    size_t ci_group_size) const {
 
   double average_outcome = average.at(OUTCOME);
 
@@ -70,7 +72,7 @@ std::vector<double> RegressionPredictionStrategy::compute_variance(
 
   // This is the amount by which var_between is inflated due to using small groups
   double group_noise = (var_total - var_between) / (ci_group_size - 1);
-  
+
   // A simple variance correction, would be to use:
   // var_debiased = var_between - group_noise.
   // However, this may be biased in small samples; we do an objective
@@ -81,13 +83,13 @@ std::vector<double> RegressionPredictionStrategy::compute_variance(
 }
 
 
-size_t RegressionPredictionStrategy::prediction_value_length() {
+size_t RegressionPredictionStrategy::prediction_value_length() const {
   return 1;
 }
 
 PredictionValues RegressionPredictionStrategy::precompute_prediction_values(
     const std::vector<std::vector<size_t>>& leaf_samples,
-    const Observations& observations) {
+    const Data& data) const {
   size_t num_leaves = leaf_samples.size();
   std::vector<std::vector<double>> values(num_leaves);
 
@@ -97,25 +99,32 @@ PredictionValues RegressionPredictionStrategy::precompute_prediction_values(
       continue;
     }
 
+    double sum = 0.0;
+    double weight = 0.0;
+    for (auto& sample : leaf_node) {
+      sum += data.get_weight(sample) * data.get_outcome(sample);
+      weight  += data.get_weight(sample);
+    }
+
+    // if total weight is very small, treat the leaf as empty
+    if (std::abs(weight) <= 1e-16) {
+      continue;
+    }
+
     std::vector<double>& averages = values[i];
     averages.resize(1);
-
-    double average = 0.0;
-    for (auto& sample : leaf_node) {
-      average += observations.get(Observations::OUTCOME, sample);
-    }
-    averages[OUTCOME] = average / leaf_node.size();
+    averages[OUTCOME] = sum / weight;
   }
 
-  return PredictionValues(values, num_leaves, 1);
+  return PredictionValues(values, 1);
 }
 
-std::vector<double> RegressionPredictionStrategy::compute_debiased_error(
+std::vector<std::pair<double, double>>  RegressionPredictionStrategy::compute_error(
     size_t sample,
     const std::vector<double>& average,
     const PredictionValues& leaf_values,
-    const Observations& observations) {
-  double outcome = observations.get(Observations::OUTCOME, sample);
+    const Data& data) const {
+  double outcome = data.get_outcome(sample);
 
   double error = average.at(OUTCOME) - outcome;
   double mse = error * error;
@@ -133,9 +142,15 @@ std::vector<double> RegressionPredictionStrategy::compute_debiased_error(
   }
 
   if (num_trees <= 1) {
-    return { NAN };
+    return { std::make_pair<double, double>(NAN, NAN) };
   }
 
   bias /= num_trees * (num_trees - 1);
-  return { mse - bias };
+
+  double debiased_error = mse - bias;
+
+  auto output = std::pair<double, double>(debiased_error, bias);
+  return { output };
 }
+
+} // namespace grf

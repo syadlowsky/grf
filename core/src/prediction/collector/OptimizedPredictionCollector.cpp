@@ -15,21 +15,25 @@
   along with grf. If not, see <http://www.gnu.org/licenses/>.
  #-------------------------------------------------------------------------------*/
 
+#include <stdexcept>
+
 #include "prediction/collector/OptimizedPredictionCollector.h"
 
-OptimizedPredictionCollector::OptimizedPredictionCollector(std::shared_ptr<OptimizedPredictionStrategy> strategy,
-                                                           uint ci_group_size):
-    strategy(strategy),
-    ci_group_size(ci_group_size) {}
+namespace grf {
+
+OptimizedPredictionCollector::OptimizedPredictionCollector(std::unique_ptr<OptimizedPredictionStrategy> strategy):
+    strategy(std::move(strategy)) {}
 
 std::vector<Prediction> OptimizedPredictionCollector::collect_predictions(const Forest& forest,
-                                                                          Data* prediction_data,
+                                                                          const Data& train_data,
+                                                                          const Data& data,
                                                                           const std::vector<std::vector<size_t>>& leaf_nodes_by_tree,
                                                                           const std::vector<std::vector<bool>>& valid_trees_by_sample,
-                                                                          bool estimate_error) {
+                                                                          bool estimate_variance,
+                                                                          bool estimate_error) const {
   size_t num_trees = forest.get_trees().size();
-  size_t num_samples = prediction_data->get_num_rows();
-  bool record_leaf_values = ci_group_size > 1 || estimate_error;
+  size_t num_samples = data.get_num_rows();
+  bool record_leaf_values = estimate_variance || estimate_error;
 
   std::vector<Prediction> predictions;
   predictions.reserve(num_samples);
@@ -51,7 +55,7 @@ std::vector<Prediction> OptimizedPredictionCollector::collect_predictions(const 
       const std::vector<size_t>& leaf_nodes = leaf_nodes_by_tree.at(tree_index);
       size_t node = leaf_nodes.at(sample);
 
-      std::shared_ptr<Tree> tree = forest.get_trees()[tree_index];
+      const std::unique_ptr<Tree>& tree = forest.get_trees()[tree_index];
       const PredictionValues& prediction_values = tree->get_prediction_values();
 
       if (!prediction_values.empty(node)) {
@@ -67,23 +71,31 @@ std::vector<Prediction> OptimizedPredictionCollector::collect_predictions(const 
     // that this can only occur when honesty is enabled, and is expected to be rare.
     if (num_leaves == 0) {
       std::vector<double> nan(strategy->prediction_length(), NAN);
-      predictions.push_back(Prediction(nan, nan, nan));
+      predictions.emplace_back(nan, nan, nan, nan);
       continue;
     }
 
     normalize_prediction_values(num_leaves, average_value);
     std::vector<double> point_prediction = strategy->predict(average_value);
 
-    PredictionValues prediction_values(leaf_values, num_trees, strategy->prediction_value_length());
-    std::vector<double> variance = ci_group_size > 1
-        ? strategy->compute_variance(average_value, prediction_values, ci_group_size)
+    PredictionValues prediction_values(leaf_values, strategy->prediction_value_length());
+    std::vector<double> variance = estimate_variance
+        ? strategy->compute_variance(average_value, prediction_values, forest.get_ci_group_size())
         : std::vector<double>();
 
-    std::vector<double> mse = estimate_error
-        ? strategy->compute_debiased_error(sample, average_value, prediction_values, forest.get_observations())
-        : std::vector<double>();
+    std::vector<double> mse;
+    std::vector<double> mce;
 
-    Prediction prediction(point_prediction, variance, mse);
+    if (estimate_error) {
+      std::vector<std::pair<double, double>> error = strategy->compute_error(
+              sample, average_value, prediction_values, data);
+
+      mse.push_back(error[0].first);
+      mce.push_back(error[0].second);
+    }
+
+    Prediction prediction(point_prediction, variance, mse, mce);
+
     validate_prediction(sample, prediction);
     predictions.push_back(prediction);
   }
@@ -92,7 +104,7 @@ std::vector<Prediction> OptimizedPredictionCollector::collect_predictions(const 
 
 void OptimizedPredictionCollector::add_prediction_values(size_t node,
     const PredictionValues& prediction_values,
-    std::vector<double>& combined_average) {
+    std::vector<double>& combined_average) const {
   if (combined_average.empty()) {
     combined_average.resize(prediction_values.get_num_types());
   }
@@ -103,16 +115,19 @@ void OptimizedPredictionCollector::add_prediction_values(size_t node,
 }
 
 void OptimizedPredictionCollector::normalize_prediction_values(size_t num_leaves,
-    std::vector<double>& combined_average) {
+                                                               std::vector<double>& combined_average) const {
   for (double& value : combined_average) {
     value /= num_leaves;
   }
 }
 
-void OptimizedPredictionCollector::validate_prediction(size_t sample, Prediction prediction) {
+void OptimizedPredictionCollector::validate_prediction(size_t sample,
+                                                       const Prediction& prediction) const {
   size_t prediction_length = strategy->prediction_length();
   if (prediction.size() != prediction_length) {
     throw std::runtime_error("Prediction for sample " + std::to_string(sample) +
                              " did not have the expected length.");
   }
 }
+
+} // namespace grf

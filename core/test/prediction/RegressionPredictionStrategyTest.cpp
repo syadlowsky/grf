@@ -18,11 +18,13 @@
 #include <map>
 #include <unordered_set>
 #include <fstream>
-#include "commons/Observations.h"
+#include "commons/Data.h"
 #include "commons/utility.h"
 #include "prediction/RegressionPredictionStrategy.h"
 
 #include "catch.hpp"
+
+using namespace grf;
 
 TEST_CASE("flipping signs of outcome flips predictions", "[regression, prediction]") {
   std::vector<double> averages = {1.1251472};
@@ -43,7 +45,7 @@ TEST_CASE("regression variance estimates are positive", "[regression, prediction
 
   RegressionPredictionStrategy prediction_strategy;
   std::vector<double> variance = prediction_strategy.compute_variance(
-      averages, PredictionValues(leaf_values, 4, 1), 2);
+      averages, PredictionValues(leaf_values, 1), 2);
 
   REQUIRE(variance.size() == 1);
   REQUIRE(variance[0] > 0);
@@ -59,14 +61,41 @@ TEST_CASE("scaling outcome scales regression variance", "[regression, prediction
   RegressionPredictionStrategy prediction_strategy;
   std::vector<double> first_variance = prediction_strategy.compute_variance(
       averages,
-      PredictionValues(leaf_values, 4, 1)
+      PredictionValues(leaf_values, 1)
       , 2);
   std::vector<double> second_variance = prediction_strategy.compute_variance(
       scaled_average,
-      PredictionValues(scaled_leaf_values, 4, 1), 2);
+      PredictionValues(scaled_leaf_values, 1), 2);
 
   REQUIRE(first_variance.size() == 1);
   REQUIRE(second_variance.size() == 1);
   REQUIRE(equal_doubles(first_variance[0], second_variance[0] / 4, 1.0e-10));
 }
 
+
+TEST_CASE("debiased errors are smaller than raw errors", "[regression, prediction]") {
+  std::vector<double> average = {2.725};
+  std::vector<std::vector<double>> leaf_values = {{3.2}, {4.5}, {6.7}, {-3.5}};
+
+  std::vector<double> outcomes = {6.4, 9.0, 13.4, -7.0};
+  DefaultData data(outcomes, 4, 1);
+  data.set_outcome_index(0);
+
+  RegressionPredictionStrategy prediction_strategy;
+
+  for (size_t sample=0; sample < 4; ++sample) {
+    auto error = prediction_strategy.compute_error(
+          sample,
+          average,
+          PredictionValues(leaf_values, 1),
+          data).at(0);
+    double debiased_error = error.first;
+
+    // Raw error
+    double outcome = data.get_outcome(sample);
+    double raw_error = average.at(0) - outcome;
+    double mse = raw_error * raw_error;
+
+    REQUIRE(debiased_error < mse);
+  }
+}

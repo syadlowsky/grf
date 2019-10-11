@@ -18,19 +18,23 @@
 #ifndef GRF_QUANTILERELABELINGSTRATEGY_H
 #define GRF_QUANTILERELABELINGSTRATEGY_H
 
-#include "commons/Observations.h"
+#include "commons/Data.h"
 #include "tree/Tree.h"
 #include "relabeling/RelabelingStrategy.h"
 
-class QuantileRelabelingStrategy: public RelabelingStrategy {
+namespace grf {
+
+class QuantileRelabelingStrategy final: public RelabelingStrategy {
 public:
   QuantileRelabelingStrategy(const std::vector<double>& quantiles);
-  std::unordered_map<size_t, double> relabel(
+  bool relabel(
       const std::vector<size_t>& samples,
-      const Observations& observations);
+      const Data& data,
+      std::vector<double>& responses_by_sample) const;
 private:
   std::vector<double> quantiles;
 };
 
+} // namespace grf
 
 #endif //GRF_QUANTILERELABELINGSTRATEGY_H
